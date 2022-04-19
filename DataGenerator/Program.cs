@@ -1,15 +1,34 @@
 ﻿using DataGenerator.Domain;
+using DataGenerator.Infra;
+using Microsoft.Extensions.Configuration;
 using Puffix.ConsoleLogMagnifier;
+using Puffix.IoC.Configuration;
 
 const int maxTryCount = 5;
 
 ConsoleHelper.Write("Welcome to the data generator console App.");
 ConsoleHelper.Write("This help will generate sample data for your sample dashboards.");
 
-GeneratorService service = GeneratorService.CreateNew();
+IIoCContainerWithConfiguration container;
+try
+{
+    IConfigurationRoot configuration = new ConfigurationBuilder()
+           .SetBasePath(Directory.GetCurrentDirectory())
+           .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
+           .Build();
 
+    container = IoCContainer.BuildContainer(configuration);
+}
+catch (Exception error)
+{
+    ConsoleHelper.Write("Error while initializong the console App");
+    ConsoleHelper.WriteError(error);
+
+    return;
+}
+
+GeneratorService service = container.Resolve<GeneratorService>();
 ConsoleKey key;
-
 do
 {
     ConsoleHelper.WriteInfo("Press Y to specify start and end year for data generation, D to specify start and end date for data generation, to Q to quit.");
@@ -29,10 +48,10 @@ do
             DateOnly startDate = new DateOnly(startYear, 1, 1);
             DateOnly endDate = new DateOnly(endYear, 12, 31);
 
+            await service.GenerateData(startDate, endDate);
             // TODO generate data
             // TODO save data
-            // TODO manage holidays
-
+            
             ConsoleHelper.WriteWarning("Under construction");
         }
         else if (key == ConsoleKey.D)
@@ -40,10 +59,10 @@ do
             service.SetStartAndEndDate(maxTryCount, out DateOnly startDate, out DateOnly endDate);
             ConsoleHelper.WriteInfo($"Generate data for the period between {startDate} and {endDate}");
 
+            await service.GenerateData(startDate, endDate);
             // TODO generate data
             // TODO save data
-            // TODO manage holidays
-
+            
             ConsoleHelper.WriteWarning("Under construction");
 
         }
