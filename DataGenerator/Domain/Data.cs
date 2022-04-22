@@ -1,6 +1,6 @@
 ﻿namespace DataGenerator.Domain;
 
-public class Data : IData
+public abstract class Data : IData
 {
     public DateOnly Date { get; init; }
 
@@ -15,11 +15,6 @@ public class Data : IData
         Date = date;
         IsHoliday = isHoliday;
         HolidayName = holidayName;
-    }
-
-    public static IData CreateNew(DateOnly date, bool isHoliday, string holidayName)
-    {
-        return new Data(date, isHoliday, holidayName);
     }
 
     public override string ToString()

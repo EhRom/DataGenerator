@@ -77,11 +77,7 @@ public class GeneratorService
         while (!EnterDate(maxTryCount, ++currentTryCount, "end", out endYear)) { }
 
         if (startYear > endYear)
-        {
-            int tempYear = startYear;
-            startYear = endYear;
-            endYear = tempYear;
-        }
+            (endYear, startYear) = (startYear, endYear);
     }
 
     public bool EnterDate(int maxTryCount, int currentTryCount, string yearName, out int year)
@@ -140,7 +136,7 @@ public class GeneratorService
             bool isHoliday = dataContainer.Holidays.Where(h => h.Date == currentDate).Any();
             string holidayName = dataContainer.Holidays.Where(h => h.Date == currentDate).Select(h => h.Name).FirstOrDefault();
 
-            IData generatedData = Data.CreateNew(currentDate, isHoliday, holidayName);
+            IData generatedData = ProductivityData.CreateNew(currentDate, isHoliday, holidayName);
             dataContainer.AddData(generatedData);
         }
     }
