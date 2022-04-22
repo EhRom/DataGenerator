@@ -134,7 +134,7 @@ public class GeneratorService
         for (DateOnly currentDate = dataContainer.StartDate; currentDate <= dataContainer.EndDate; currentDate = currentDate.AddDays(1))
         {
             bool isHoliday = dataContainer.Holidays.Where(h => h.Date == currentDate).Any();
-            string holidayName = dataContainer.Holidays.Where(h => h.Date == currentDate).Select(h => h.Name).FirstOrDefault();
+            string holidayName = dataContainer.Holidays.Where(h => h.Date == currentDate).Select(h => h.Name).FirstOrDefault(string.Empty);
 
             IData generatedData = ProductivityData.CreateNew(currentDate, isHoliday, holidayName);
             dataContainer.AddData(generatedData);

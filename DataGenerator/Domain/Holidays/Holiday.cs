@@ -6,5 +6,10 @@ public class Holiday
 
     public DateOnly Date { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
+
+    public override string ToString()
+    {
+        return $"{Date} ({Name})-{base.ToString()}";
+    }
 }

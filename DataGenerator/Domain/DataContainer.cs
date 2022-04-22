@@ -10,7 +10,7 @@ public class DataContainer
 
     public IEnumerable<Holiday> Holidays { get; init; }
 
-    public IDictionary<DateOnly, IData> GeneratedData { get; init; }
+    public IDictionary<DateOnly, ICollection<IData>> GeneratedData { get; init; }
 
     public DataContainer(IEnumerable<Holiday> holidays, DateOnly startDate, DateOnly endDate)
     {
@@ -18,7 +18,7 @@ public class DataContainer
         StartDate = startDate;
         EndDate = endDate;
 
-        GeneratedData = new Dictionary<DateOnly, IData>();
+        GeneratedData = new Dictionary<DateOnly, ICollection<IData>>();
     }
 
     public static DataContainer CreateNew(IEnumerable<Holiday> holidays, DateOnly startDate, DateOnly endDate)
@@ -28,6 +28,9 @@ public class DataContainer
 
     public void AddData(IData data)
     {
-        GeneratedData[data.Date] = data;
+        if (!GeneratedData.ContainsKey(data.Date))
+            GeneratedData[data.Date] = new List<IData>();
+
+        GeneratedData[data.Date].Add( data);
     }
 }

@@ -14,7 +14,7 @@ public abstract class Data : IData
     {
         Date = date;
         IsHoliday = isHoliday;
-        HolidayName = holidayName;
+        HolidayName = holidayName ?? string.Empty;
     }
 
     public override string ToString()
