@@ -39,6 +39,9 @@ do
         int maxTryCount = container.ConfigurationRoot.GetValue<int>("maxRetryCount");
         IEnumerable<Product> productList = container.ConfigurationRoot.GetSection("productList").Get<IEnumerable<Product>>();
 
+        string outputDirectoryPath = container.ConfigurationRoot.GetValue<string>("outputDirectoryPath");
+        string fileNamePrefix = container.ConfigurationRoot.GetValue<string>("fileNamePrefix");
+
         if (key == ConsoleKey.Q)
         {
             ConsoleHelper.WriteInfo("Thank you for using the data generator console App. See you soon!");
@@ -52,9 +55,9 @@ do
             DateOnly endDate = new DateOnly(endYear, 12, 31);
 
             using DataContainer dataContainer = await service.GenerateData(startDate, endDate, productList);
-            // TODO generate data
-            // TODO save data
+            string generatedFilePath = await service.SaveDataToFile(dataContainer, outputDirectoryPath, fileNamePrefix);
 
+            ConsoleHelper.WriteSuccess($"The file is generated. File path: {generatedFilePath}");
             ConsoleHelper.WriteWarning("Under construction");
         }
         else if (key == ConsoleKey.D)
@@ -63,9 +66,9 @@ do
             ConsoleHelper.WriteInfo($"Generate data for the period between {startDate} and {endDate}");
 
             using DataContainer dataContainer = await service.GenerateData(startDate, endDate, productList);
-            // TODO generate data
-            // TODO save data
+            string generatedFilePath = await service.SaveDataToFile(dataContainer, outputDirectoryPath, fileNamePrefix);
 
+            ConsoleHelper.WriteSuccess($"The file is generated. File path: {generatedFilePath}");
             ConsoleHelper.WriteWarning("Under construction");
         }
         else
@@ -80,4 +83,3 @@ do
         ConsoleHelper.WriteNewLine(2);
     }
 } while (key != ConsoleKey.Q);
-

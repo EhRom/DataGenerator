@@ -21,4 +21,8 @@ public abstract class Data : IData
     {
         return IsHoliday ? $"{Date} ({HolidayName})-{IsWeekend}-{base.ToString()}" : $"{Date}-{IsWeekend}-{base.ToString()}";
     }
+
+    public abstract string GetHeader(char separator);
+
+    public abstract string GetContent(char separator);
 }

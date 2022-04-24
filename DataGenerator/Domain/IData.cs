@@ -10,5 +10,9 @@ namespace DataGenerator.Domain
         string HolidayName { get; init; }
 
         bool IsHoliday { get; init; }
+
+        string GetHeader(char separator);
+
+        string GetContent(char separator);
     }
 }

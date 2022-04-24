@@ -1,6 +1,6 @@
 ﻿using DataGenerator.Domain.Holidays;
-using System;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace DataGenerator.Domain;
 
@@ -98,5 +98,27 @@ public class DataContainer : IDisposable
         var buffer = new byte[bytesNumber];
         randomNumberGenerator.GetBytes(buffer, 0, bytesNumber);
         return buffer;
+    }
+
+    public string GetCsvContent()
+    {
+        bool isHeaderSet = false;
+        StringBuilder contentBuilder = new StringBuilder();
+
+        foreach (ICollection<IData> generatedDataCollection in GeneratedData.Values)
+        {
+            foreach (IData generatedData in generatedDataCollection)
+            {
+                if(!isHeaderSet)
+                {
+                    contentBuilder.AppendLine(generatedData.GetHeader(';'));
+                    isHeaderSet = true;
+                }
+
+                contentBuilder.AppendLine(generatedData.GetContent(';'));
+            }
+        }
+
+        return contentBuilder.ToString();
     }
 }

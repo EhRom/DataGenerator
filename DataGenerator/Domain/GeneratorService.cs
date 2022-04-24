@@ -148,4 +148,34 @@ public class GeneratorService
             }
         }
     }
+
+    public async Task<string> SaveDataToFile(DataContainer dataContainer, string outputDirectory, string fileNamePrefix)
+    {
+        string generatedFileName = BuildFilePath(outputDirectory, fileNamePrefix, dataContainer.StartDate, dataContainer.EndDate);
+
+        string fileContent = dataContainer.GetCsvContent();
+
+        await File.WriteAllTextAsync(generatedFileName, fileContent);
+
+        return generatedFileName;
+    }
+
+    private string BuildFilePath(string outputDirectory, string fileNamePrefix, DateOnly startDate, DateOnly endDate)
+    {
+        if (!Path.IsPathFullyQualified(outputDirectory))
+            outputDirectory = Path.GetFullPath(outputDirectory);
+
+        if (!Directory.Exists(outputDirectory))
+            Directory.CreateDirectory(outputDirectory);
+
+        return Path.Combine(outputDirectory, BuildFileName(fileNamePrefix, startDate, endDate));
+    }
+
+    private string BuildFileName(string fileNamePrefix, DateOnly startDate, DateOnly endDate)
+    {
+        const string DATA_FORMAT = "yyyyMMdd";
+        string guid = Guid.NewGuid().ToString("N");
+
+        return $"{fileNamePrefix}-{startDate.ToString(DATA_FORMAT)}-{endDate.ToString(DATA_FORMAT)}-{guid}.csv";
+    }
 }

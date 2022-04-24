@@ -20,4 +20,30 @@ public class ProductivityData : Data, IData
     {
         return new ProductivityData(date, isHoliday, holidayName, productName, volume, peopleTime);
     }
+
+    public override string GetHeader(char separator)
+    {
+        string[] headers =  new string[]
+        {
+            nameof(Date),
+            nameof(ProductName),
+            nameof(Volume),
+            nameof(PeopleTime)
+        };
+
+        return string.Join(separator, headers);
+    }
+
+    public override string GetContent(char separator)
+    {
+        string[] contents = new string[]
+        {
+            Date.ToString(),
+            ProductName,
+            Volume.ToString(),
+            PeopleTime.ToString()
+
+        };
+        return string.Join(separator, contents);
+    }
 }
