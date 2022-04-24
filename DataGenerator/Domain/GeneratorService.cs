@@ -1,4 +1,5 @@
 ﻿using DataGenerator.Domain.Holidays;
+using DataGenerator.Domain.Products;
 using Puffix.ConsoleLogMagnifier;
 
 namespace DataGenerator.Domain;
@@ -11,6 +12,7 @@ public class GeneratorService
     {
         this.holidayService = holidayService;
     }
+
 
     public void SetStartAndEndDate(int maxTryCount, out DateOnly startDate, out DateOnly endDate)
     {
@@ -115,7 +117,7 @@ public class GeneratorService
         return isValid;
     }
 
-    public async Task<DataContainer> GenerateData(DateOnly startDate, DateOnly endDate)
+    public async Task<DataContainer> GenerateData(DateOnly startDate, DateOnly endDate, IEnumerable<Product> productList)
     {
         ConsoleHelper.WriteVerbose("Get holidays.");
         IEnumerable<Holiday> holidays = await holidayService.GetHolidays(startDate, endDate);
@@ -124,20 +126,26 @@ public class GeneratorService
         DataContainer dataContainer = DataContainer.CreateNew(holidays, startDate, endDate);
 
         ConsoleHelper.WriteVerbose($"Generate date from {startDate} to {endDate}.");
-        GenerateData(dataContainer);
+        GenerateData(dataContainer, productList);
 
         return dataContainer;
     }
 
-    private static void GenerateData(DataContainer dataContainer)
+    private static void GenerateData(DataContainer dataContainer, IEnumerable<Product> productList)
     {
         for (DateOnly currentDate = dataContainer.StartDate; currentDate <= dataContainer.EndDate; currentDate = currentDate.AddDays(1))
         {
             bool isHoliday = dataContainer.Holidays.Where(h => h.Date == currentDate).Any();
             string holidayName = dataContainer.Holidays.Where(h => h.Date == currentDate).Select(h => h.Name).FirstOrDefault(string.Empty);
 
-            IData generatedData = ProductivityData.CreateNew(currentDate, isHoliday, holidayName);
-            dataContainer.AddData(generatedData);
+            foreach (Product product in productList)
+            {
+                decimal volume = dataContainer.GetRandomValue(product.DefaultVolume, product.DefaultVolumeVariation, product.VolumeVariationDivisor);
+                decimal peopleTime = dataContainer.GetRandomValue(product.DefaultPeopleTime, product.DefaultPeopleTimeVariation, product.PeopleTimeVariationDivisor);
+
+                IData generatedData = ProductivityData.CreateNew(currentDate, isHoliday, holidayName, product.Name, volume, peopleTime);
+                dataContainer.AddData(generatedData);
+            }
         }
     }
 }

@@ -46,6 +46,7 @@ internal class IoCContainer : IIoCContainerWithConfiguration
     }
 
     public ObjectT Resolve<ObjectT>(params IoCNamedParameter[] parameters)
+        where ObjectT : notnull
     {
         ObjectT resolvedObject;
         if (parameters != null && parameters.Length > 0)

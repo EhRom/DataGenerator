@@ -1,10 +1,9 @@
 ﻿using DataGenerator.Domain;
+using DataGenerator.Domain.Products;
 using DataGenerator.Infra;
 using Microsoft.Extensions.Configuration;
 using Puffix.ConsoleLogMagnifier;
 using Puffix.IoC.Configuration;
-
-const int maxTryCount = 5;
 
 ConsoleHelper.Write("Welcome to the data generator console App.");
 ConsoleHelper.Write("This help will generate sample data for your sample dashboards.");
@@ -36,6 +35,10 @@ do
     ConsoleHelper.ClearLastCharacters(1);
     try
     {
+        ConsoleHelper.WriteVerbose("Load configuration.");
+        int maxTryCount = container.ConfigurationRoot.GetValue<int>("maxRetryCount");
+        IEnumerable<Product> productList = container.ConfigurationRoot.GetSection("productList").Get<IEnumerable<Product>>();
+
         if (key == ConsoleKey.Q)
         {
             ConsoleHelper.WriteInfo("Thank you for using the data generator console App. See you soon!");
@@ -48,10 +51,10 @@ do
             DateOnly startDate = new DateOnly(startYear, 1, 1);
             DateOnly endDate = new DateOnly(endYear, 12, 31);
 
-            await service.GenerateData(startDate, endDate);
+            using DataContainer dataContainer = await service.GenerateData(startDate, endDate, productList);
             // TODO generate data
             // TODO save data
-            
+
             ConsoleHelper.WriteWarning("Under construction");
         }
         else if (key == ConsoleKey.D)
@@ -59,12 +62,11 @@ do
             service.SetStartAndEndDate(maxTryCount, out DateOnly startDate, out DateOnly endDate);
             ConsoleHelper.WriteInfo($"Generate data for the period between {startDate} and {endDate}");
 
-            await service.GenerateData(startDate, endDate);
+            using DataContainer dataContainer = await service.GenerateData(startDate, endDate, productList);
             // TODO generate data
             // TODO save data
-            
-            ConsoleHelper.WriteWarning("Under construction");
 
+            ConsoleHelper.WriteWarning("Under construction");
         }
         else
         {
