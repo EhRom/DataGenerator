@@ -61,11 +61,29 @@ public class DataContainer : IDisposable
         GeneratedData[data.Date].Add(data);
     }
 
-    public decimal GetRandomValue(decimal defaultValue, long valueVariation, long valueVaraitionDivisor)
+    public long GetRandomLongValue(long valueVariation)
     {
         valueVariation = Math.Abs(valueVariation);
 
-        decimal randomValue = (decimal)NextRandomValue(Math.Abs(valueVariation) * -1, Math.Abs(valueVariation)) / valueVaraitionDivisor;
+        long randomValue = NextRandomValue(0, valueVariation);
+
+        return randomValue;
+    }
+
+    public long GetRandomLongValue(long defaultValue, long valueVariation)
+    {
+        valueVariation = Math.Abs(valueVariation);
+
+        long randomValue = NextRandomValue(valueVariation * -1, valueVariation);
+
+        return defaultValue + randomValue;
+    }
+
+    public double GetRandomDoubleValue(double defaultValue, long valueVariation, long valueVaraitionDivisor)
+    {
+        valueVariation = Math.Abs(valueVariation);
+
+        double randomValue = (double)NextRandomValue(valueVariation * -1, valueVariation) / valueVaraitionDivisor;
 
         return defaultValue + randomValue;
     }
@@ -73,7 +91,7 @@ public class DataContainer : IDisposable
     public long NextRandomValue(long minValue, long maxExclusiveValue)
     {
         if (minValue >= maxExclusiveValue)
-            return minValue;
+            (maxExclusiveValue, minValue) = (minValue, maxExclusiveValue);
 
         long diff = maxExclusiveValue - minValue;
         long upperBound = long.MaxValue / diff * diff;
@@ -83,6 +101,8 @@ public class DataContainer : IDisposable
         {
             randomNumber = GetRandomLong();
         } while (randomNumber >= upperBound);
+
+        randomNumber = Math.Abs(randomNumber);
 
         return minValue + (randomNumber % diff);
     }
@@ -120,5 +140,11 @@ public class DataContainer : IDisposable
         }
 
         return contentBuilder.ToString();
+    }
+
+    public bool IsHolidayOrWeekend(DateOnly date)
+    {
+        return  date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday ||
+                Holidays.Where(h => h.Date == date).Any();
     }
 }

@@ -1,4 +1,5 @@
-﻿using DataGenerator.Domain.Holidays;
+﻿using DataGenerator.Domain.Claim;
+using DataGenerator.Domain.Holidays;
 using DataGenerator.Domain.Products;
 using Puffix.ConsoleLogMagnifier;
 
@@ -7,12 +8,16 @@ namespace DataGenerator.Domain;
 public class GeneratorService
 {
     private readonly IHolidayService holidayService;
+    private readonly IProductService productService;
+    private readonly IClaimService claimService;
 
-    public GeneratorService(IHolidayService holidayService)
+
+    public GeneratorService(IHolidayService holidayService, IProductService productService, IClaimService claimService)
     {
         this.holidayService = holidayService;
+        this.productService = productService;
+        this.claimService = claimService;
     }
-
 
     public void SetStartAndEndDate(int maxTryCount, out DateOnly startDate, out DateOnly endDate)
     {
@@ -116,6 +121,19 @@ public class GeneratorService
 
         return isValid;
     }
+    public async Task<DataContainer> GenerateData(DateOnly startDate, DateOnly endDate, ClaimsConfiguration claimsConfiguration)
+    {
+        ConsoleHelper.WriteVerbose("Get holidays.");
+        IEnumerable<Holiday> holidays = await holidayService.GetHolidays(startDate, endDate);
+
+        ConsoleHelper.WriteVerbose("Initialize data container.");
+        DataContainer dataContainer = DataContainer.CreateNew(holidays, startDate, endDate);
+
+        ConsoleHelper.WriteVerbose($"Generate claims data from {startDate} to {endDate}.");
+        claimService.GenerateData(dataContainer, claimsConfiguration);
+
+        return dataContainer;
+    }
 
     public async Task<DataContainer> GenerateData(DateOnly startDate, DateOnly endDate, IEnumerable<Product> productList)
     {
@@ -125,28 +143,10 @@ public class GeneratorService
         ConsoleHelper.WriteVerbose("Initialize data container.");
         DataContainer dataContainer = DataContainer.CreateNew(holidays, startDate, endDate);
 
-        ConsoleHelper.WriteVerbose($"Generate date from {startDate} to {endDate}.");
-        GenerateData(dataContainer, productList);
+        ConsoleHelper.WriteVerbose($"Generate productivity data from {startDate} to {endDate}.");
+        productService.GenerateData(dataContainer, productList);
 
         return dataContainer;
-    }
-
-    private static void GenerateData(DataContainer dataContainer, IEnumerable<Product> productList)
-    {
-        for (DateOnly currentDate = dataContainer.StartDate; currentDate <= dataContainer.EndDate; currentDate = currentDate.AddDays(1))
-        {
-            bool isHoliday = dataContainer.Holidays.Where(h => h.Date == currentDate).Any();
-            string holidayName = dataContainer.Holidays.Where(h => h.Date == currentDate).Select(h => h.Name).FirstOrDefault(string.Empty);
-
-            foreach (Product product in productList)
-            {
-                decimal volume = dataContainer.GetRandomValue(product.DefaultVolume, product.DefaultVolumeVariation, product.VolumeVariationDivisor);
-                decimal peopleTime = dataContainer.GetRandomValue(product.DefaultPeopleTime, product.DefaultPeopleTimeVariation, product.PeopleTimeVariationDivisor);
-
-                IData generatedData = ProductivityData.CreateNew(currentDate, isHoliday, holidayName, product.Name, volume, peopleTime);
-                dataContainer.AddData(generatedData);
-            }
-        }
     }
 
     public async Task<string> SaveDataToFile(DataContainer dataContainer, string outputDirectory, string fileNamePrefix)

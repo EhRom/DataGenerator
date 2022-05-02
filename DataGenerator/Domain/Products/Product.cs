@@ -4,9 +4,9 @@
     {
         public string Name { get; set; }
 
-        public decimal DefaultVolume { get; set; }
+        public double DefaultVolume { get; set; }
 
-        public decimal DefaultPeopleTime { get; set; }
+        public double DefaultPeopleTime { get; set; }
 
         public long DefaultVolumeVariation { get; set; }
 

@@ -1,4 +1,5 @@
 ﻿using DataGenerator.Domain;
+using DataGenerator.Domain.Claim;
 using DataGenerator.Domain.Products;
 using DataGenerator.Infra;
 using Microsoft.Extensions.Configuration;
@@ -37,7 +38,10 @@ do
     {
         ConsoleHelper.WriteVerbose("Load configuration.");
         int maxTryCount = container.ConfigurationRoot.GetValue<int>("maxRetryCount");
+        string generationType = container.ConfigurationRoot["generationType"];
+
         IEnumerable<Product> productList = container.ConfigurationRoot.GetSection("productList").Get<IEnumerable<Product>>();
+        ClaimsConfiguration claimsConfiguration = container.ConfigurationRoot.GetSection("claimsConfiguration").Get<ClaimsConfiguration>();
 
         string outputDirectoryPath = container.ConfigurationRoot.GetValue<string>("outputDirectoryPath");
         string fileNamePrefix = container.ConfigurationRoot.GetValue<string>("fileNamePrefix");
@@ -54,18 +58,23 @@ do
             DateOnly startDate = new DateOnly(startYear, 1, 1);
             DateOnly endDate = new DateOnly(endYear, 12, 31);
 
-            using DataContainer dataContainer = await service.GenerateData(startDate, endDate, productList);
+            using DataContainer dataContainer =
+                string.Equals(generationType, "claims") ?
+                    await service.GenerateData(startDate, endDate, claimsConfiguration) :
+                    await service.GenerateData(startDate, endDate, productList);
             string generatedFilePath = await service.SaveDataToFile(dataContainer, outputDirectoryPath, fileNamePrefix);
 
             ConsoleHelper.WriteSuccess($"The file is generated. File path: {generatedFilePath}");
-            ConsoleHelper.WriteWarning("Under construction");
         }
         else if (key == ConsoleKey.D)
         {
             service.SetStartAndEndDate(maxTryCount, out DateOnly startDate, out DateOnly endDate);
             ConsoleHelper.WriteInfo($"Generate data for the period between {startDate} and {endDate}");
 
-            using DataContainer dataContainer = await service.GenerateData(startDate, endDate, productList);
+            using DataContainer dataContainer =
+                string.Equals(generationType, "claims") ?
+                    await service.GenerateData(startDate, endDate, claimsConfiguration) :
+                    await service.GenerateData(startDate, endDate, productList);
             string generatedFilePath = await service.SaveDataToFile(dataContainer, outputDirectoryPath, fileNamePrefix);
 
             ConsoleHelper.WriteSuccess($"The file is generated. File path: {generatedFilePath}");
