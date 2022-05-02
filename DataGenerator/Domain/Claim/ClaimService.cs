@@ -16,9 +16,6 @@ public class ClaimService : IClaimService
     {
         for (DateOnly currentDate = dataContainer.StartDate; currentDate <= dataContainer.EndDate; currentDate = currentDate.AddDays(1))
         {
-            bool isHoliday = dataContainer.Holidays.Where(h => h.Date == currentDate).Any();
-            string holidayName = dataContainer.Holidays.Where(h => h.Date == currentDate).Select(h => h.Name).FirstOrDefault(string.Empty);
-
             if (!dataContainer.IsHolidayOrWeekend(currentDate))
             {
                 long claimPerDay = dataContainer.GetRandomLongValue(claimsConfiguration.AverageClaimPerDay, claimsConfiguration.DefaultAverageClaimPerDayVariation);
@@ -33,7 +30,7 @@ public class ClaimService : IClaimService
                     ClaimType claimType = GetRandomClaimType(dataContainer);
                     ClaimPriority claimPriority = GetRandomClaimPriority(dataContainer);
 
-                    IData generatedData = ClaimData.CreateNew(currentDate, isHoliday, holidayName, customerId, fileId, claimType, claimPriority, claimCreationDate, claimResolutionDate);
+                    IData generatedData = ClaimData.CreateNew(currentDate, false, string.Empty, customerId, fileId, claimType, claimPriority, claimCreationDate, claimResolutionDate);
                     dataContainer.AddData(generatedData);
                 }
             }
