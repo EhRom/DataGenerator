@@ -1,16 +1,19 @@
-﻿using DataGenerator.Infra;
+﻿using DataGenerator.Domain.Calendar.Models;
+using DataGenerator.Infra;
+using Microsoft.Extensions.Configuration;
 
-namespace DataGenerator.Domain.Holidays;
+namespace DataGenerator.Domain.Calendar;
 
-public class HolidayService : IHolidayService
+public class HolidayService(IConfiguration configuration, IHolidayApiHttpRepository holidayApiHttpRepository) : IHolidayService
 {
-    private const string HolidayServiceUri = "https://calendrier.api.gouv.fr/jours-feries/metropole/";
-    private readonly IHttpService httpService;
+    private readonly IHolidayApiHttpRepository holidayApiHttpRepository = holidayApiHttpRepository;
 
-    public HolidayService(IHttpService httpService)
+    private readonly Lazy<string> holidayServiceUriLazy = new(() =>
     {
-        this.httpService = httpService;
-    }
+        return configuration[nameof(holidayServiceUri)] ?? string.Empty;
+    });
+
+    private string holidayServiceUri => holidayServiceUriLazy.Value;
 
     public async Task<IEnumerable<Holiday>> GetHolidays(DateOnly startDate, DateOnly endDate)
     {
@@ -22,11 +25,7 @@ public class HolidayService : IHolidayService
         IEnumerable<Holiday> holidays = new List<Holiday>();
 
         if (startYear > endYear)
-        {
-            int year = startYear;
-            startYear = endYear;
-            endYear = year;
-        }
+            (endYear, startYear) = (startYear, endYear);
 
         for (int currentYear = startYear; currentYear <= endYear; currentYear++)
         {
@@ -38,16 +37,10 @@ public class HolidayService : IHolidayService
 
     public async Task<IEnumerable<Holiday>> GetHolidays(int year)
     {
-        string baseUri = HolidayServiceUri;
-        Uri holidayUri = BuildGetHolidaysUri(baseUri, year);
+        IHolidayApiQueryInformation queryInformation = holidayApiHttpRepository.BuildUnauthenticatedQuery(HttpMethod.Get, holidayServiceUri, $"{year}.json", string.Empty, string.Empty);
 
-        Dictionary<string, string> result = await httpService.HttpGetAsync<Dictionary<string, string>>(holidayUri);
+        Dictionary<string, string> result = await holidayApiHttpRepository.HttpJsonAsync<Dictionary<string, string>>(queryInformation);
         return ConvertHolidays(result);
-    }
-
-    private static Uri BuildGetHolidaysUri(string baseUri, int year)
-    {
-        return new Uri($"{baseUri}/{year}.json");
     }
 
     private IEnumerable<Holiday> ConvertHolidays(Dictionary<string, string> baseHolidays)

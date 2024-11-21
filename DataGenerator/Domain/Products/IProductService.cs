@@ -1,6 +1,5 @@
 ﻿namespace DataGenerator.Domain.Products;
 
-public interface IProductService : IItemService
+public interface IProductService : IDataService
 {
-    void GenerateData(DataContainer dataContainer, IEnumerable<Product> productList);
 }

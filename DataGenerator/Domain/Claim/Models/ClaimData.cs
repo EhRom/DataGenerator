@@ -1,4 +1,6 @@
-﻿namespace DataGenerator.Domain.Claim;
+﻿using DataGenerator.Domain.Models;
+
+namespace DataGenerator.Domain.Claim.Models;
 
 public class ClaimData : Data, IData
 {

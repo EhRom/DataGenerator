@@ -2,22 +2,23 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Autofac" Version="6.3.0" />
-    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="7.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="6.0.4" />
-    <PackageReference Include="Polly" Version="7.2.3" />
-    <PackageReference Include="Puffix.ConsoleLogMagnifier" Version="2.0.0" />
-    <PackageReference Include="Puffix.IoC" Version="2.0.0" />
-    <PackageReference Include="Puffix.IoC.Configuration" Version="2.0.0" />
+    <PackageReference Include="Autofac" Version="8.1.1" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="9.0.0" />
+    <PackageReference Include="Polly" Version="8.5.0" />
+    <PackageReference Include="Puffix.ConsoleLogMagnifier" Version="3.3.0" />
+    <PackageReference Include="Puffix.IoC" Version="3.3.0" />
+    <PackageReference Include="Puffix.IoC.Configuration" Version="3.3.0" />
+    <PackageReference Include="Puffix.Rest" Version="3.3.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿namespace DataGenerator.Domain.Claim;
+﻿namespace DataGenerator.Domain.Claim.Models;
 
 public enum ClaimPriority
 {

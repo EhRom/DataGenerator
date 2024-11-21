@@ -1,4 +1,4 @@
-﻿namespace DataGenerator.Domain;
+﻿namespace DataGenerator.Domain.Models;
 
 public abstract class Data : IData
 {

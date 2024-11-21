@@ -1,9 +1,14 @@
-﻿namespace DataGenerator.Domain.Claim;
+﻿using DataGenerator.Domain.Claim.Models;
+using DataGenerator.Domain.Models;
+using Microsoft.Extensions.Configuration;
 
-public class ClaimService : IClaimService
+namespace DataGenerator.Domain.Claim;
+
+public class ClaimService(IConfiguration configuration) : IClaimService
 {
     private static readonly TimeOnly startOfDay = new TimeOnly(8, 0);
     private static readonly TimeOnly endOfDay = new TimeOnly(17, 30);
+
     private static readonly long workedDayDurationInMinutes = Convert.ToInt64(TimeSpan.FromTicks(endOfDay.Ticks - startOfDay.Ticks).TotalMinutes);
 
     private const long minNumberOfDaysBeforeCustomerIdReuse = 20;
@@ -12,8 +17,17 @@ public class ClaimService : IClaimService
     private readonly IDictionary<string, ICollection<DateOnly>> customersId = new Dictionary<string, ICollection<DateOnly>>();
     private readonly IDictionary<string, ICollection<DateOnly>> filesId = new Dictionary<string, ICollection<DateOnly>>();
 
-    public void GenerateData(DataContainer dataContainer, ClaimsConfiguration claimsConfiguration)
+
+    private readonly Lazy<ClaimsConfiguration> claimsConfigurationLazy = new(() =>
     {
+        return configuration.GetSection(nameof(claimsConfiguration)).Get<ClaimsConfiguration>()!;
+    });
+
+    private ClaimsConfiguration claimsConfiguration => claimsConfigurationLazy.Value;
+
+    public void GenerateData(DataContainer dataContainer)
+    {
+        // TODO generic loop
         for (DateOnly currentDate = dataContainer.StartDate; currentDate <= dataContainer.EndDate; currentDate = currentDate.AddDays(1))
         {
             if (!dataContainer.IsHolidayOrWeekend(currentDate))
@@ -55,7 +69,7 @@ public class ClaimService : IClaimService
             customerId = Guid.NewGuid().ToString("N");
 
         if (!customersId.ContainsKey(customerId))
-            customersId.Add(customerId, new List<DateOnly>());
+            customersId.Add(customerId, []);
         customersId[customerId].Add(DateOnly.FromDateTime(claimCreationDate));
 
         return customerId;

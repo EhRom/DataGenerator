@@ -1,4 +1,4 @@
-﻿namespace DataGenerator.Domain.Holidays;
+﻿namespace DataGenerator.Domain.Calendar.Models;
 
 public class Holiday
 {

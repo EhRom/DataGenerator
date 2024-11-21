@@ -1,9 +1,21 @@
-﻿namespace DataGenerator.Domain.Products;
+﻿using DataGenerator.Domain.Models;
+using DataGenerator.Domain.Products.Models;
+using Microsoft.Extensions.Configuration;
 
-public class ProductService : IProductService
+namespace DataGenerator.Domain.Products;
+
+public class ProductService(IConfiguration configuration) : IProductService
 {
-    public void GenerateData(DataContainer dataContainer, IEnumerable<Product> productList)
+    private readonly Lazy<IEnumerable<Product>> productListLazy = new(() =>
     {
+        return configuration.GetSection(nameof(productList)).Get<IEnumerable<Product>>()!;
+    });
+
+    private IEnumerable<Product> productList => productListLazy.Value;
+
+    public void GenerateData(DataContainer dataContainer)
+    {
+        // TODO generic loop
         for (DateOnly currentDate = dataContainer.StartDate; currentDate <= dataContainer.EndDate; currentDate = currentDate.AddDays(1))
         {
             bool isHoliday = dataContainer.Holidays.Where(h => h.Date == currentDate).Any();

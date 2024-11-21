@@ -1,6 +1,5 @@
 ﻿namespace DataGenerator.Domain.Claim;
 
-public interface IClaimService : IItemService
+public interface IClaimService : IDataService
 {
-    void GenerateData(DataContainer dataContainer, ClaimsConfiguration claimsConfiguration);
 }

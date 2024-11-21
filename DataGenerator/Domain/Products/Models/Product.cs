@@ -1,4 +1,4 @@
-﻿namespace DataGenerator.Domain.Products
+﻿namespace DataGenerator.Domain.Products.Models
 {
     public class Product
     {
@@ -18,7 +18,7 @@
 
         public Product()
         {
-            Name =  string.Empty;
+            Name = string.Empty;
         }
     }
 }

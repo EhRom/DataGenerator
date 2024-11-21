@@ -1,4 +1,6 @@
-﻿namespace DataGenerator.Domain.Products;
+﻿using DataGenerator.Domain.Models;
+
+namespace DataGenerator.Domain.Products.Models;
 
 public class ProductivityData : Data, IData
 {
@@ -23,7 +25,7 @@ public class ProductivityData : Data, IData
 
     public override string GetHeader(char separator)
     {
-        string[] headers =  new string[]
+        string[] headers = new string[]
         {
             nameof(Date),
             nameof(ProductName),

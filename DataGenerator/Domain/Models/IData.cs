@@ -1,5 +1,4 @@
-﻿
-namespace DataGenerator.Domain
+﻿namespace DataGenerator.Domain.Models
 {
     public interface IData
     {

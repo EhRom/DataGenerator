@@ -1,5 +1,7 @@
 ﻿
-namespace DataGenerator.Domain.Holidays;
+using DataGenerator.Domain.Calendar.Models;
+
+namespace DataGenerator.Domain.Calendar;
 
 public interface IHolidayService
 {

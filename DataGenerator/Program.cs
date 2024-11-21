@@ -1,9 +1,12 @@
 ﻿using DataGenerator.Domain;
+using DataGenerator.Domain.Calendar;
 using DataGenerator.Domain.Claim;
+using DataGenerator.Domain.Models;
 using DataGenerator.Domain.Products;
 using DataGenerator.Infra;
 using Microsoft.Extensions.Configuration;
 using Puffix.ConsoleLogMagnifier;
+using Puffix.IoC;
 using Puffix.IoC.Configuration;
 
 ConsoleHelper.Write("Welcome to the data generator console App.");
@@ -12,7 +15,7 @@ ConsoleHelper.Write("This help will generate sample data for your sample dashboa
 IIoCContainerWithConfiguration container;
 try
 {
-    IConfigurationRoot configuration = new ConfigurationBuilder()
+    IConfiguration configuration = new ConfigurationBuilder()
            .SetBasePath(Directory.GetCurrentDirectory())
            .AddJsonFile("appSettings.json", optional: false, reloadOnChange: true)
            .Build();
@@ -27,58 +30,54 @@ catch (Exception error)
     return;
 }
 
-GeneratorService service = container.Resolve<GeneratorService>();
 ConsoleKey key;
 do
 {
-    ConsoleHelper.WriteInfo("Press Y to specify start and end year for data generation, D to specify start and end date for data generation, to Q to quit.");
+    ConsoleHelper.WriteInfo("Press:");
+    ConsoleHelper.WriteInfo("- Y to specify start and end year for data generation, and generate data");
+    ConsoleHelper.WriteInfo("- D to specify start and end date for data generation, and generate data");
+    ConsoleHelper.WriteInfo("- Q to quit.");
     key = Console.ReadKey().Key;
     ConsoleHelper.ClearLastCharacters(1);
+
     try
     {
         ConsoleHelper.WriteVerbose("Load configuration.");
-        int maxTryCount = container.ConfigurationRoot.GetValue<int>("maxRetryCount");
-        string generationType = container.ConfigurationRoot["generationType"];
 
-        IEnumerable<Product> productList = container.ConfigurationRoot.GetSection("productList").Get<IEnumerable<Product>>();
-        ClaimsConfiguration claimsConfiguration = container.ConfigurationRoot.GetSection("claimsConfiguration").Get<ClaimsConfiguration>();
-
-        string outputDirectoryPath = container.ConfigurationRoot.GetValue<string>("outputDirectoryPath");
-        string fileNamePrefix = container.ConfigurationRoot.GetValue<string>("fileNamePrefix");
 
         if (key == ConsoleKey.Q)
         {
             ConsoleHelper.WriteInfo("Thank you for using the data generator console App. See you soon!");
         }
-        else if (key == ConsoleKey.Y)
+        else if (key == ConsoleKey.Y || key == ConsoleKey.D)
         {
-            service.SetStartAndEndYear(maxTryCount, out int startYear, out int endYear);
-            ConsoleHelper.WriteInfo($"Generate data for the period between {startYear} and {endYear}");
+            ISetupService setupService = container.Resolve<ISetupService>();
 
-            DateOnly startDate = new DateOnly(startYear, 1, 1);
-            DateOnly endDate = new DateOnly(endYear, 12, 31);
+            IHolidayService holidayService = container.Resolve<IHolidayService>();
 
-            using DataContainer dataContainer =
-                string.Equals(generationType, "claims") ?
-                    await service.GenerateData(startDate, endDate, claimsConfiguration) :
-                    await service.GenerateData(startDate, endDate, productList);
-            string generatedFilePath = await service.SaveDataToFile(dataContainer, outputDirectoryPath, fileNamePrefix);
+            string generationType = container.Configuration["generationType"]!;
+            IDataService dataService = string.Equals(generationType, "claims") ?
+                                container.Resolve<IClaimService>() :
+                                container.Resolve<IProductService>();
 
-            ConsoleHelper.WriteSuccess($"The file is generated. File path: {generatedFilePath}");
-        }
-        else if (key == ConsoleKey.D)
-        {
-            service.SetStartAndEndDate(maxTryCount, out DateOnly startDate, out DateOnly endDate);
-            ConsoleHelper.WriteInfo($"Generate data for the period between {startDate} and {endDate}");
+            IGeneratorService generatorService = container.Resolve<IGeneratorService>
+            (
+                IoCNamedParameter.CreateNew("configuration", container.Configuration),
+                IoCNamedParameter.CreateNew(nameof(holidayService), holidayService),
+                IoCNamedParameter.CreateNew(nameof(dataService), dataService)
+            );
 
-            using DataContainer dataContainer =
-                string.Equals(generationType, "claims") ?
-                    await service.GenerateData(startDate, endDate, claimsConfiguration) :
-                    await service.GenerateData(startDate, endDate, productList);
-            string generatedFilePath = await service.SaveDataToFile(dataContainer, outputDirectoryPath, fileNamePrefix);
+            IPeriod period = setupService.SetStartAndEndPeriod(key == ConsoleKey.Y);
 
-            ConsoleHelper.WriteSuccess($"The file is generated. File path: {generatedFilePath}");
-            ConsoleHelper.WriteWarning("Under construction");
+            ConsoleHelper.WriteInfo($"Generate data for the period between {period.StartPeriodText} and {period.EndPeriodText}");
+
+            DateTime startProcessDate = DateTime.Now;
+
+            string generatedFilePath = await generatorService.GenerateAndPersistData(period.StartPeriod, period.EndPeriod);
+
+            TimeSpan duration = TimeSpan.FromTicks(DateTime.Now.Ticks - startProcessDate.Ticks);
+
+            ConsoleHelper.WriteSuccess($"The file is generated. File path: {generatedFilePath} (Duration: {duration})");
         }
         else
         {

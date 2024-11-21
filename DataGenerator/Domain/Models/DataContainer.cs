@@ -1,8 +1,8 @@
-﻿using DataGenerator.Domain.Holidays;
+﻿using DataGenerator.Domain.Calendar.Models;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace DataGenerator.Domain;
+namespace DataGenerator.Domain.Models;
 
 public class DataContainer : IDisposable
 {
@@ -104,7 +104,7 @@ public class DataContainer : IDisposable
 
         randomNumber = Math.Abs(randomNumber);
 
-        return minValue + (randomNumber % diff);
+        return minValue + randomNumber % diff;
     }
 
     private long GetRandomLong()
@@ -129,7 +129,7 @@ public class DataContainer : IDisposable
         {
             foreach (IData generatedData in generatedDataCollection)
             {
-                if(!isHeaderSet)
+                if (!isHeaderSet)
                 {
                     contentBuilder.AppendLine(generatedData.GetHeader(';'));
                     isHeaderSet = true;
@@ -144,7 +144,7 @@ public class DataContainer : IDisposable
 
     public bool IsHolidayOrWeekend(DateOnly date)
     {
-        return  date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday ||
+        return date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday ||
                 Holidays.Where(h => h.Date == date).Any();
     }
 }

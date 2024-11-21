@@ -9,22 +9,21 @@ namespace DataGenerator.Infra;
 
 internal class IoCContainer : IIoCContainerWithConfiguration
 {
-
     private readonly IContainer container;
 
-    public IConfigurationRoot ConfigurationRoot { get; }
+    public IConfiguration Configuration { get; }
 
-    public IoCContainer(ContainerBuilder containerBuilder, IConfigurationRoot configuration)
+    public IoCContainer(ContainerBuilder containerBuilder, IConfiguration configuration)
     {
         // Self-register the container.
         containerBuilder.Register(_ => this).As<IIoCContainerWithConfiguration>().SingleInstance();
         containerBuilder.Register(_ => this).As<IIoCContainer>().SingleInstance();
 
         container = containerBuilder.Build();
-        ConfigurationRoot = configuration;
+        Configuration = configuration;
     }
 
-    public static IIoCContainerWithConfiguration BuildContainer(IConfigurationRoot configuration)
+    public static IIoCContainerWithConfiguration BuildContainer(IConfiguration configuration)
     {
         // Register HttpClientMessageFactory
         ServiceCollection services = new ServiceCollection();
@@ -46,7 +45,7 @@ internal class IoCContainer : IIoCContainerWithConfiguration
     }
 
     public ObjectT Resolve<ObjectT>(params IoCNamedParameter[] parameters)
-        where ObjectT : notnull
+        where ObjectT : class
     {
         ObjectT resolvedObject;
         if (parameters != null && parameters.Length > 0)
@@ -76,4 +75,5 @@ internal class IoCContainer : IIoCContainerWithConfiguration
                 yield return new NamedParameter(parameter.Name, parameter.Value);
         }
     }
+
 }
