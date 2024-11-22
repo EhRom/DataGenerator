@@ -1,8 +1,9 @@
-﻿using DataGenerator.Domain.Models;
+﻿using DataGenerator.Domain.Generator.Models;
+using System.Runtime.InteropServices.Marshalling;
 
 namespace DataGenerator.Domain.Claim.Models;
 
-public class ClaimData : Data, IData
+public class ClaimData : Data<ClaimData>, IData
 {
     private const string DATE_FORMAT = "yyyy-MM-ddTHH:mm:ss";
     public string CustomerId { get; init; } = string.Empty;
@@ -33,33 +34,27 @@ public class ClaimData : Data, IData
         return new ClaimData(date, isHoliday, holidayName, customerId, fileId, claimType, claimPriority, claimCreateDate, claimCloseDate);
     }
 
-    public override string GetHeader(char separator)
+    public static IEnumerable<string> GetHeader()
     {
-        string[] headers = new string[]
-        {
+        return [
             nameof(CustomerId),
             nameof(FileId),
             nameof(ClaimType),
             nameof(ClaimPriority),
             nameof(ClaimCreateDate),
             nameof(ClaimCloseDate)
-        };
-
-        return string.Join(separator, headers);
+        ];
     }
 
-    public override string GetContent(char separator)
+    public override IEnumerable<string> GetContent()
     {
-        string[] contents = new string[]
-        {
+        return [
             CustomerId,
             FileId,
             ClaimType.ToString(),
             ClaimPriority.ToString(),
             ClaimCreateDate.ToString(DATE_FORMAT),
             ClaimCloseDate.ToString(DATE_FORMAT)
-        };
-
-        return string.Join(separator, contents);
+        ];
     }
 }

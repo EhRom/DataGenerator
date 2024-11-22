@@ -1,8 +1,8 @@
-﻿using DataGenerator.Domain.Models;
+﻿using DataGenerator.Domain.Generator.Models;
 using Microsoft.Extensions.Configuration;
 using Puffix.ConsoleLogMagnifier;
 
-namespace DataGenerator.Domain;
+namespace DataGenerator.Domain.Generator;
 
 public class SetupService(IConfiguration configuration) : ISetupService
 {
@@ -15,6 +15,17 @@ public class SetupService(IConfiguration configuration) : ISetupService
     });
 
     private int maxTryCount => maxTryCountLazy.Value;
+
+    public IPeriod SetAutomaticPeriod()
+    {
+        const int monthCount = 12;
+        DateTime referenceDate = DateTime.Now.AddMonths(-monthCount);
+
+        DateOnly startDate = new DateOnly(referenceDate.Year, referenceDate.Month, 1);
+        DateOnly endDate = startDate.AddMonths(monthCount).AddDays(-1);
+
+        return Period.CreateNew(startDate, endDate, false);
+    }
 
     public IPeriod SetStartAndEndPeriod(bool isWholeYear)
     {

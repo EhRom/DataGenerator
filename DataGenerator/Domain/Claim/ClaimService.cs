@@ -1,5 +1,5 @@
 ﻿using DataGenerator.Domain.Claim.Models;
-using DataGenerator.Domain.Models;
+using DataGenerator.Domain.Generator.Models;
 using Microsoft.Extensions.Configuration;
 
 namespace DataGenerator.Domain.Claim;
@@ -14,9 +14,8 @@ public class ClaimService(IConfiguration configuration) : IClaimService
     private const long minNumberOfDaysBeforeCustomerIdReuse = 20;
     private const long minNumberOfDaysBeforeFileIdReuse = 60;
 
-    private readonly IDictionary<string, ICollection<DateOnly>> customersId = new Dictionary<string, ICollection<DateOnly>>();
-    private readonly IDictionary<string, ICollection<DateOnly>> filesId = new Dictionary<string, ICollection<DateOnly>>();
-
+    private ICollection<string> customersId = [];
+    private ICollection<string> filesId = [];
 
     private readonly Lazy<ClaimsConfiguration> claimsConfigurationLazy = new(() =>
     {
@@ -25,36 +24,37 @@ public class ClaimService(IConfiguration configuration) : IClaimService
 
     private ClaimsConfiguration claimsConfiguration => claimsConfigurationLazy.Value;
 
-    public void GenerateData(DataContainer dataContainer)
+    public IEnumerable<string> GetDataHeaders()
     {
-        // TODO generic loop
-        for (DateOnly currentDate = dataContainer.StartDate; currentDate <= dataContainer.EndDate; currentDate = currentDate.AddDays(1))
+        return ClaimData.GetHeader();
+    }
+
+    public void GenerateData(IDataContainer dataContainer, DateOnly currentDate)
+    {
+        if (!dataContainer.IsHolidayOrWeekend(currentDate))
         {
-            if (!dataContainer.IsHolidayOrWeekend(currentDate))
+            long claimPerDay = dataContainer.GetRandomLongValue(claimsConfiguration.AverageClaimPerDay, claimsConfiguration.DefaultAverageClaimPerDayVariation);
+            for (long claimId = 0; claimId < claimPerDay; claimId++)
             {
-                long claimPerDay = dataContainer.GetRandomLongValue(claimsConfiguration.AverageClaimPerDay, claimsConfiguration.DefaultAverageClaimPerDayVariation);
-                for (long claimId = 0; claimId < claimPerDay; claimId++)
-                {
-                    long dayDelayInMinutes = Math.Abs(dataContainer.GetRandomLongValue(workedDayDurationInMinutes));
+                long dayDelayInMinutes = Math.Abs(dataContainer.GetRandomLongValue(workedDayDurationInMinutes));
 
-                    DateTime claimCreationDate = currentDate.ToDateTime(startOfDay.AddMinutes(dayDelayInMinutes));
-                    DateTime claimResolutionDate = GetRandomResolutionDate(dataContainer, claimsConfiguration, claimCreationDate);
-                    string customerId = GetRandomCustomerId(dataContainer, claimsConfiguration, claimCreationDate);
-                    string fileId = GetRandomFileId(dataContainer, claimsConfiguration, claimCreationDate);
-                    ClaimType claimType = GetRandomClaimType(dataContainer);
-                    ClaimPriority claimPriority = GetRandomClaimPriority(dataContainer);
+                DateTime claimCreationDate = currentDate.ToDateTime(startOfDay.AddMinutes(dayDelayInMinutes));
+                DateTime claimResolutionDate = GetRandomResolutionDate(dataContainer, claimsConfiguration, claimCreationDate);
+                string customerId = GetRandomCustomerId(dataContainer, claimsConfiguration, claimCreationDate);
+                string fileId = GetRandomFileId(dataContainer, claimsConfiguration, claimCreationDate);
+                ClaimType claimType = GetRandomClaimType(dataContainer);
+                ClaimPriority claimPriority = GetRandomClaimPriority(dataContainer);
 
-                    IData generatedData = ClaimData.CreateNew(currentDate, false, string.Empty, customerId, fileId, claimType, claimPriority, claimCreationDate, claimResolutionDate);
-                    dataContainer.AddData(generatedData);
-                }
+                IData generatedData = ClaimData.CreateNew(currentDate, false, string.Empty, customerId, fileId, claimType, claimPriority, claimCreationDate, claimResolutionDate);
+                dataContainer.AddData(generatedData);
             }
         }
 
-        int resuedCustomerCount = customersId.Where(kv => kv.Value.Count > 1).Count();
-        int resuedFileCount = filesId.Where(kv => kv.Value.Count > 1).Count();
+        customersId = AutoCleanCollection(customersId, 10000, 20);
+        filesId = AutoCleanCollection(filesId, 10000, 30);
     }
 
-    public string GetRandomCustomerId(DataContainer dataContainer, ClaimsConfiguration claimsConfiguration, DateTime claimCreationDate)
+    public string GetRandomCustomerId(IDataContainer dataContainer, ClaimsConfiguration claimsConfiguration, DateTime claimCreationDate)
     {
         long triggerValue = claimsConfiguration.AverageClaimPerDay * minNumberOfDaysBeforeCustomerIdReuse;
 
@@ -63,19 +63,18 @@ public class ClaimService(IConfiguration configuration) : IClaimService
         if (customersId.Count > triggerValue && percentage >= claimsConfiguration.PercentageOfNewCustomers)
         {
             int nextCustomerId = Convert.ToInt32(dataContainer.GetRandomLongValue(customersId.Count));
-            customerId = customersId.Keys.Skip(nextCustomerId).Take(1).First();
+            customerId = customersId.Skip(nextCustomerId).Take(1).First();
         }
         else
+        {
             customerId = Guid.NewGuid().ToString("N");
-
-        if (!customersId.ContainsKey(customerId))
-            customersId.Add(customerId, []);
-        customersId[customerId].Add(DateOnly.FromDateTime(claimCreationDate));
+            customersId.Add(customerId);
+        }
 
         return customerId;
     }
 
-    public string GetRandomFileId(DataContainer dataContainer, ClaimsConfiguration claimsConfiguration, DateTime claimCreationDate)
+    public string GetRandomFileId(IDataContainer dataContainer, ClaimsConfiguration claimsConfiguration, DateTime claimCreationDate)
     {
         long triggerValue = claimsConfiguration.AverageClaimPerDay * minNumberOfDaysBeforeFileIdReuse;
 
@@ -84,19 +83,18 @@ public class ClaimService(IConfiguration configuration) : IClaimService
         if (filesId.Count > triggerValue && percentage >= claimsConfiguration.PercentageOfNewFiles)
         {
             int nextFileId = Convert.ToInt32(dataContainer.GetRandomLongValue(filesId.Count));
-            fileId = filesId.Keys.Skip(nextFileId).Take(1).First();
+            fileId = filesId.Skip(nextFileId).Take(1).First();
         }
         else
+        {
             fileId = Guid.NewGuid().ToString("N");
-
-        if (!filesId.ContainsKey(fileId))
-            filesId.Add(fileId, new List<DateOnly>());
-        filesId[fileId].Add(DateOnly.FromDateTime(claimCreationDate));
+            filesId.Add(fileId);
+        }
 
         return fileId;
     }
 
-    private ClaimType GetRandomClaimType(DataContainer dataContainer)
+    private ClaimType GetRandomClaimType(IDataContainer dataContainer)
     {
         // 70% Issue / 30% InformationRequest
         long percentage = Math.Abs(dataContainer.GetRandomLongValue(100));
@@ -104,7 +102,7 @@ public class ClaimService(IConfiguration configuration) : IClaimService
         return percentage >= 70 ? ClaimType.InformationRequest : ClaimType.Issue;
     }
 
-    private ClaimPriority GetRandomClaimPriority(DataContainer dataContainer)
+    private ClaimPriority GetRandomClaimPriority(IDataContainer dataContainer)
     {
         // 20% Low / 50% Medium / 30% High
         long percentage = dataContainer.GetRandomLongValue(100);
@@ -113,7 +111,7 @@ public class ClaimService(IConfiguration configuration) : IClaimService
                 percentage >= 20 ? ClaimPriority.Medium : ClaimPriority.Low;
     }
 
-    private DateTime GetRandomResolutionDate(DataContainer dataContainer, ClaimsConfiguration claimsConfiguration, DateTime claimCreationDate)
+    private DateTime GetRandomResolutionDate(IDataContainer dataContainer, ClaimsConfiguration claimsConfiguration, DateTime claimCreationDate)
     {
         long resolutionInDay = dataContainer.GetRandomLongValue(claimsConfiguration.AverageResolutionDelay, claimsConfiguration.DefaultAverageResolutionDelayVariation);
 
@@ -138,5 +136,23 @@ public class ClaimService(IConfiguration configuration) : IClaimService
         }
 
         return claimResolutionDate;
+    }
+
+    private static ICollection<string> AutoCleanCollection(ICollection<string> collection, int cleanTreshold, int percentageToClean)
+    {
+        // At most 50%
+        percentageToClean = percentageToClean % 50;
+
+        int collectionSize = collection.Count;
+
+        if (collectionSize > cleanTreshold)
+        {
+            double countToKeep = Convert.ToDouble(100 - percentageToClean) / 100.0 * Convert.ToDouble(collectionSize);
+            int countToKeepInt = Convert.ToInt32(countToKeep);
+
+            collection = collection.Skip(collectionSize - countToKeepInt).Take(countToKeepInt).ToList();
+        }
+
+        return collection;
     }
 }

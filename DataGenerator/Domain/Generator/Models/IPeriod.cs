@@ -1,10 +1,10 @@
-﻿namespace DataGenerator.Domain.Models;
+﻿namespace DataGenerator.Domain.Generator.Models;
 
 public interface IPeriod
 {
-    DateOnly StartPeriod { get; }
+    DateOnly Start { get; }
 
-    DateOnly EndPeriod { get; }
+    DateOnly End { get; }
 
     bool IsWholeYear { get; }
 

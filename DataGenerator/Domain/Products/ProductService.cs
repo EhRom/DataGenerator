@@ -1,4 +1,4 @@
-﻿using DataGenerator.Domain.Models;
+﻿using DataGenerator.Domain.Generator.Models;
 using DataGenerator.Domain.Products.Models;
 using Microsoft.Extensions.Configuration;
 
@@ -13,22 +13,23 @@ public class ProductService(IConfiguration configuration) : IProductService
 
     private IEnumerable<Product> productList => productListLazy.Value;
 
-    public void GenerateData(DataContainer dataContainer)
+    public IEnumerable<string> GetDataHeaders()
     {
-        // TODO generic loop
-        for (DateOnly currentDate = dataContainer.StartDate; currentDate <= dataContainer.EndDate; currentDate = currentDate.AddDays(1))
+        return ProductivityData.GetHeader();
+    }
+
+    public void GenerateData(IDataContainer dataContainer, DateOnly currentDate)
+    {
+        bool isHoliday = dataContainer.Holidays.Where(h => h.Date == currentDate).Any();
+        string holidayName = dataContainer.Holidays.Where(h => h.Date == currentDate).Select(h => h.Name).FirstOrDefault(string.Empty);
+
+        foreach (Product product in productList)
         {
-            bool isHoliday = dataContainer.Holidays.Where(h => h.Date == currentDate).Any();
-            string holidayName = dataContainer.Holidays.Where(h => h.Date == currentDate).Select(h => h.Name).FirstOrDefault(string.Empty);
+            double volume = dataContainer.GetRandomDoubleValue(product.DefaultVolume, product.DefaultVolumeVariation, product.VolumeVariationDivisor);
+            double peopleTime = dataContainer.GetRandomDoubleValue(product.DefaultPeopleTime, product.DefaultPeopleTimeVariation, product.PeopleTimeVariationDivisor);
 
-            foreach (Product product in productList)
-            {
-                double volume = dataContainer.GetRandomDoubleValue(product.DefaultVolume, product.DefaultVolumeVariation, product.VolumeVariationDivisor);
-                double peopleTime = dataContainer.GetRandomDoubleValue(product.DefaultPeopleTime, product.DefaultPeopleTimeVariation, product.PeopleTimeVariationDivisor);
-
-                IData generatedData = ProductivityData.CreateNew(currentDate, isHoliday, holidayName, product.Name, volume, peopleTime);
-                dataContainer.AddData(generatedData);
-            }
+            IData generatedData = ProductivityData.CreateNew(currentDate, isHoliday, holidayName, product.Name, volume, peopleTime);
+            dataContainer.AddData(generatedData);
         }
     }
 }

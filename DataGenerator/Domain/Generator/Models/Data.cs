@@ -1,6 +1,7 @@
-﻿namespace DataGenerator.Domain.Models;
+﻿namespace DataGenerator.Domain.Generator.Models;
 
-public abstract class Data : IData
+public abstract class Data<DataT> : IData
+    where DataT : IData
 {
     public DateOnly Date { get; init; }
 
@@ -22,7 +23,5 @@ public abstract class Data : IData
         return IsHoliday ? $"{Date} ({HolidayName})-{IsWeekend}-{base.ToString()}" : $"{Date}-{IsWeekend}-{base.ToString()}";
     }
 
-    public abstract string GetHeader(char separator);
-
-    public abstract string GetContent(char separator);
+    public abstract IEnumerable<string> GetContent();
 }

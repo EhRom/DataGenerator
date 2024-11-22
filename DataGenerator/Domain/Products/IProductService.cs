@@ -1,5 +1,5 @@
-﻿namespace DataGenerator.Domain.Products;
+﻿using DataGenerator.Domain.Generator;
 
-public interface IProductService : IDataService
-{
-}
+namespace DataGenerator.Domain.Products;
+
+public interface IProductService : IDataService { }

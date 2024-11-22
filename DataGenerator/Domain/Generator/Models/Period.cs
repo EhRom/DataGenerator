@@ -1,17 +1,16 @@
-﻿
-namespace DataGenerator.Domain.Models;
+﻿namespace DataGenerator.Domain.Generator.Models;
 
 public class Period(DateOnly startPeriod, DateOnly endPeriod, bool isWholeYear) : IPeriod
 {
-    public DateOnly StartPeriod { get; init; } = startPeriod;
+    public DateOnly Start { get; init; } = startPeriod;
 
-    public DateOnly EndPeriod { get; init; } = endPeriod;
+    public DateOnly End { get; init; } = endPeriod;
 
     public bool IsWholeYear { get; init; } = isWholeYear;
 
-    public string StartPeriodText => IsWholeYear ? StartPeriod.Year.ToString() : StartPeriod.ToString();
+    public string StartPeriodText => IsWholeYear ? Start.Year.ToString() : Start.ToString();
 
-    public string EndPeriodText => IsWholeYear ? EndPeriod.Year.ToString() : EndPeriod.ToString();
+    public string EndPeriodText => IsWholeYear ? End.Year.ToString() : End.ToString();
 
     public static Period CreateNew(DateOnly startPeriod, DateOnly endPeriod, bool isWholeYear)
     {

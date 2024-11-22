@@ -1,13 +1,14 @@
-﻿using DataGenerator.Domain;
-using DataGenerator.Domain.Calendar;
+﻿using DataGenerator.Domain.Calendar;
 using DataGenerator.Domain.Claim;
-using DataGenerator.Domain.Models;
+using DataGenerator.Domain.Generator;
+using DataGenerator.Domain.Generator.Models;
 using DataGenerator.Domain.Products;
 using DataGenerator.Infra;
 using Microsoft.Extensions.Configuration;
 using Puffix.ConsoleLogMagnifier;
 using Puffix.IoC;
 using Puffix.IoC.Configuration;
+using System.Diagnostics;
 
 ConsoleHelper.Write("Welcome to the data generator console App.");
 ConsoleHelper.Write("This help will generate sample data for your sample dashboards.");
@@ -36,6 +37,7 @@ do
     ConsoleHelper.WriteInfo("Press:");
     ConsoleHelper.WriteInfo("- Y to specify start and end year for data generation, and generate data");
     ConsoleHelper.WriteInfo("- D to specify start and end date for data generation, and generate data");
+    ConsoleHelper.WriteInfo("- A automatic choice of dates (previous month) for data generation, and generate data");
     ConsoleHelper.WriteInfo("- Q to quit.");
     key = Console.ReadKey().Key;
     ConsoleHelper.ClearLastCharacters(1);
@@ -49,7 +51,7 @@ do
         {
             ConsoleHelper.WriteInfo("Thank you for using the data generator console App. See you soon!");
         }
-        else if (key == ConsoleKey.Y || key == ConsoleKey.D)
+        else if (key == ConsoleKey.Y || key == ConsoleKey.D || key == ConsoleKey.A)
         {
             ISetupService setupService = container.Resolve<ISetupService>();
 
@@ -67,17 +69,19 @@ do
                 IoCNamedParameter.CreateNew(nameof(dataService), dataService)
             );
 
-            IPeriod period = setupService.SetStartAndEndPeriod(key == ConsoleKey.Y);
+            IPeriod period = key == ConsoleKey.A ?
+                                            setupService.SetAutomaticPeriod() :
+                                            setupService.SetStartAndEndPeriod(key == ConsoleKey.Y);
 
             ConsoleHelper.WriteInfo($"Generate data for the period between {period.StartPeriodText} and {period.EndPeriodText}");
 
-            DateTime startProcessDate = DateTime.Now;
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
 
-            string generatedFilePath = await generatorService.GenerateAndPersistData(period.StartPeriod, period.EndPeriod);
+            string generatedFilePath = await generatorService.GenerateAndPersistData(period);
 
-            TimeSpan duration = TimeSpan.FromTicks(DateTime.Now.Ticks - startProcessDate.Ticks);
-
-            ConsoleHelper.WriteSuccess($"The file is generated. File path: {generatedFilePath} (Duration: {duration})");
+            stopwatch.Stop();
+            ConsoleHelper.WriteSuccess($"The file is generated. File path: {generatedFilePath} (Duration: {stopwatch.Elapsed})");
         }
         else
         {

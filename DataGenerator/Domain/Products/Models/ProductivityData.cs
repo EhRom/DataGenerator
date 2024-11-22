@@ -1,8 +1,8 @@
-﻿using DataGenerator.Domain.Models;
+﻿using DataGenerator.Domain.Generator.Models;
 
 namespace DataGenerator.Domain.Products.Models;
 
-public class ProductivityData : Data, IData
+public class ProductivityData : Data<ProductivityData>, IData
 {
     public string ProductName { get; init; } = string.Empty;
 
@@ -23,29 +23,24 @@ public class ProductivityData : Data, IData
         return new ProductivityData(date, isHoliday, holidayName, productName, volume, peopleTime);
     }
 
-    public override string GetHeader(char separator)
+    public static IEnumerable<string> GetHeader()
     {
-        string[] headers = new string[]
-        {
+        return [
             nameof(Date),
             nameof(ProductName),
             nameof(Volume),
             nameof(PeopleTime)
-        };
-
-        return string.Join(separator, headers);
+        ];
     }
 
-    public override string GetContent(char separator)
+    public override IEnumerable<string> GetContent()
     {
-        string[] contents = new string[]
-        {
+        return [
             Date.ToString(),
             ProductName,
             Volume.ToString(),
             PeopleTime.ToString()
 
-        };
-        return string.Join(separator, contents);
+        ];
     }
 }

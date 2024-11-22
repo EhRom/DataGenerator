@@ -1,32 +1,25 @@
 ﻿using DataGenerator.Domain.Calendar.Models;
 using System.Security.Cryptography;
-using System.Text;
 
-namespace DataGenerator.Domain.Models;
+namespace DataGenerator.Domain.Generator.Models;
 
-public class DataContainer : IDisposable
+public abstract class BaseDataContainer(IEnumerable<Holiday> holidays, IPeriod period, string dataFilePath) : IDataContainer
 {
+    protected const int SAVE_TO_FILE_TRESHOLD = 20000;
+
     private bool disposed = false;
 
-    private readonly RandomNumberGenerator randomNumberGenerator;
+    private readonly RandomNumberGenerator randomNumberGenerator = RandomNumberGenerator.Create();
 
-    public DateOnly StartDate { get; init; }
+    private readonly string dataFilePath = dataFilePath;
 
-    public DateOnly EndDate { get; init; }
+    public event EventHandler<DataCollectionEventArgs>? SaveData;
 
-    public IEnumerable<Holiday> Holidays { get; init; }
+    public IPeriod Period { get; init; } = period;
 
-    public IDictionary<DateOnly, ICollection<IData>> GeneratedData { get; init; }
+    public IEnumerable<Holiday> Holidays { get; init; } = holidays;
 
-    public DataContainer(IEnumerable<Holiday> holidays, DateOnly startDate, DateOnly endDate)
-    {
-        Holidays = holidays;
-        StartDate = startDate;
-        EndDate = endDate;
-
-        GeneratedData = new Dictionary<DateOnly, ICollection<IData>>();
-        randomNumberGenerator = RandomNumberGenerator.Create();
-    }
+    public abstract long RowCount { get; }
 
     public void Dispose()
     {
@@ -48,17 +41,20 @@ public class DataContainer : IDisposable
         }
     }
 
-    public static DataContainer CreateNew(IEnumerable<Holiday> holidays, DateOnly startDate, DateOnly endDate)
+    public abstract void AddData(IData data);
+
+    protected void LaunchSaveData(ICollection<IData> dataCollection)
     {
-        return new DataContainer(holidays, startDate, endDate);
+        if (SaveData is not null)
+            SaveData!.Invoke(this, new DataCollectionEventArgs(dataFilePath, dataCollection));
     }
 
-    public void AddData(IData data)
-    {
-        if (!GeneratedData.ContainsKey(data.Date))
-            GeneratedData[data.Date] = new List<IData>();
+    public abstract string GetCsvContent(char csvSeparatorCharacter);
 
-        GeneratedData[data.Date].Add(data);
+    public bool IsHolidayOrWeekend(DateOnly date)
+    {
+        return date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday ||
+                Holidays.Where(h => h.Date == date).Any();
     }
 
     public long GetRandomLongValue(long valueVariation)
@@ -120,31 +116,4 @@ public class DataContainer : IDisposable
         return buffer;
     }
 
-    public string GetCsvContent()
-    {
-        bool isHeaderSet = false;
-        StringBuilder contentBuilder = new StringBuilder();
-
-        foreach (ICollection<IData> generatedDataCollection in GeneratedData.Values)
-        {
-            foreach (IData generatedData in generatedDataCollection)
-            {
-                if (!isHeaderSet)
-                {
-                    contentBuilder.AppendLine(generatedData.GetHeader(';'));
-                    isHeaderSet = true;
-                }
-
-                contentBuilder.AppendLine(generatedData.GetContent(';'));
-            }
-        }
-
-        return contentBuilder.ToString();
-    }
-
-    public bool IsHolidayOrWeekend(DateOnly date)
-    {
-        return date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday ||
-                Holidays.Where(h => h.Date == date).Any();
-    }
 }

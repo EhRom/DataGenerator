@@ -1,5 +1,5 @@
-﻿namespace DataGenerator.Domain.Claim;
+﻿using DataGenerator.Domain.Generator;
 
-public interface IClaimService : IDataService
-{
-}
+namespace DataGenerator.Domain.Claim;
+
+public interface IClaimService : IDataService { }
