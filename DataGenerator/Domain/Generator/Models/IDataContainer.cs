@@ -29,7 +29,11 @@ public interface IDataContainer : IDisposable
 
     public static string GenerateCsvLine(IEnumerable<string> fields, char csvSeparatorCharacter)
     {
-        return string.Join(csvSeparatorCharacter, fields);
+        StringBuilder contentBuilder = new StringBuilder();
+
+        contentBuilder.AppendLine(string.Join(csvSeparatorCharacter, fields));
+        
+        return contentBuilder.ToString();
     }
 
     public static string GetCsvContent(char csvSeparatorCharacter, ICollection<IData> dataCollection)
