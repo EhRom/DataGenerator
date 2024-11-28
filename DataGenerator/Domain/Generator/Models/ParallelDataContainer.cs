@@ -36,6 +36,6 @@ public class ParallelDataContainer(IEnumerable<Holiday> holidays, IPeriod period
     {
         ICollection<IData> dataCollection = generatedData.Values.SelectMany(v => v).ToList();
 
-        return IDataContainer.GetCsvContent(csvSeparatorCharacter, dataCollection);
+        return IDataContainer.GetCsvContent(dataCollection, csvSeparatorCharacter);
     }
 }

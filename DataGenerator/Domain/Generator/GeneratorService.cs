@@ -95,7 +95,7 @@ public class GeneratorService(IConfiguration configuration, IHolidayService holi
 
     private async void DataContainer_SaveData(object? sender, DataCollectionEventArgs dataCollectionEventArgs)
     {
-        string fileContent = IDataContainer.GetCsvContent(csvSeparatorCharacter, dataCollectionEventArgs.DataCollection);
+        string fileContent = IDataContainer.GetCsvContent(dataCollectionEventArgs.DataCollection, csvSeparatorCharacter);
         await File.AppendAllTextAsync(dataCollectionEventArgs.DataFilePath, fileContent);
     }
 
@@ -103,7 +103,7 @@ public class GeneratorService(IConfiguration configuration, IHolidayService holi
     {
         string generatedFileName = BuildFilePath(outputDirectoryPath, fileNamePrefix, period.Start, period.End);
 
-        string headerContent = IDataContainer.GenerateCsvLine(dataService.GetDataHeaders(), csvSeparatorCharacter);
+        string headerContent = IDataContainer.GetCsvHeaders(dataService.GetDataHeaders(), csvSeparatorCharacter);
         await File.WriteAllTextAsync(generatedFileName, headerContent);
 
         return generatedFileName;

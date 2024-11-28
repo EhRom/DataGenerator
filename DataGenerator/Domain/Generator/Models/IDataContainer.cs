@@ -1,4 +1,5 @@
 ﻿using DataGenerator.Domain.Calendar.Models;
+using System.Diagnostics;
 using System.Text;
 
 namespace DataGenerator.Domain.Generator.Models;
@@ -27,21 +28,26 @@ public interface IDataContainer : IDisposable
 
     string GetCsvContent(char csvSeparatorCharacter);
 
-    public static string GenerateCsvLine(IEnumerable<string> fields, char csvSeparatorCharacter)
+    public static string GetCsvHeaders(IEnumerable<string> headers, char csvSeparatorCharacter)
     {
-        StringBuilder contentBuilder = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
 
-        contentBuilder.AppendLine(string.Join(csvSeparatorCharacter, fields));
-        
-        return contentBuilder.ToString();
+        builder.AppendLine(GenerateCsvLine(headers, csvSeparatorCharacter));
+
+        return builder.ToString();
     }
 
-    public static string GetCsvContent(char csvSeparatorCharacter, ICollection<IData> dataCollection)
+    public static string GetCsvContent(ICollection<IData> dataCollection, char csvSeparatorCharacter)
     {
         StringBuilder contentBuilder = new StringBuilder();
 
         dataCollection.ToList().ForEach(d => contentBuilder.AppendLine(GenerateCsvLine(d.GetContent(), csvSeparatorCharacter)));
 
         return contentBuilder.ToString();
+    }
+
+    private static string GenerateCsvLine(IEnumerable<string> fields, char csvSeparatorCharacter)
+    {
+        return string.Join(csvSeparatorCharacter, fields);
     }
 }
