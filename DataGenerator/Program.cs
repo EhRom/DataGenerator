@@ -25,7 +25,7 @@ try
 }
 catch (Exception error)
 {
-    ConsoleHelper.Write("Error while initializong the console App");
+    ConsoleHelper.Write("Error while initializing the console App");
     ConsoleHelper.WriteError(error);
 
     return;
