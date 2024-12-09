@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  DOTNET_VERSION: '9.0.x'
+  PACKAGE_VERSION: 0.3.0
+  APP_NAME: Puffix.DataGenerator
+
+
 jobs:
   build:
 
@@ -13,11 +19,53 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Setup .NET
+
+    - name: Setup .NET Core
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 9.0.x
-    - name: Restore dependencies
-      run: dotnet restore
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build ./${{ env.APP_NAME }}/${{ env.APP_NAME }}.csproj --configuration 'Release'
+      
+    - name: Publish for Linux
+      run: |
+        dotnet publish ./${{ env.APP_NAME }}/${{ env.APP_NAME }}.csproj --runtime linux-x64 --self-contained true --output './out/linux-x64'
+
+    - name: Publish for Windows
+      run: |
+        dotnet publish ./${{ env.APP_NAME }}/${{ env.APP_NAME }}.csproj --runtime win-x64 --self-contained true --output './out/win-x64'
+
+    - name: Package
+      working-directory: './out/'
+      run: |
+        mkdir "../${{ env.APP_NAME }}-${{ env.PACKAGE_VERSION }}/"
+
+        mkdir "../${{ env.APP_NAME }}-${{ env.PACKAGE_VERSION }}/linux-x64/"
+        7z a ${{ env.APP_NAME }}-linux-x64.7z ./linux-x64/*
+        zip -r ${{ env.APP_NAME }}-linux-x64.zip ./linux-x64/*
+
+        cp -a ./${{ env.APP_NAME }}-linux-x64.* ../${{ env.APP_NAME }}-${{ env.PACKAGE_VERSION }}/
+
+        mkdir "../${{ env.APP_NAME }}-${{ env.PACKAGE_VERSION }}/win-x64/"
+        7z a ${{ env.APP_NAME }}-win-x64.7z ./win-x64/*
+        zip -r ${{ env.APP_NAME }}-win-x64.zip ./win-x64/*
+
+        cp -a ./${{ env.APP_NAME }}-win-x64.* ../${{ env.APP_NAME }}-${{ env.PACKAGE_VERSION }}/
+    
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with: 
+        name: ${{ env.APP_NAME }}-${{ env.PACKAGE_VERSION }}
+        path: '${{ env.APP_NAME }}-${{ env.PACKAGE_VERSION }}'
+
+    - name: Create release
+      env:
+        GH_TOKEN: ${{ secrets.PFX_IMAGES_GH_CLI_TOKEN }}
+      run: |
+        gh release create v${{ env.PACKAGE_VERSION }}-$GITHUB_RUN_ID --target main --generate-notes 
+        
+        gh release upload v${{ env.PACKAGE_VERSION }}-$GITHUB_RUN_ID ${{ env.APP_NAME }}-${{ env.PACKAGE_VERSION }}/${{ env.APP_NAME }}-linux-x64.zip
+        gh release upload v${{ env.PACKAGE_VERSION }}-$GITHUB_RUN_ID ${{ env.APP_NAME }}-${{ env.PACKAGE_VERSION }}/${{ env.APP_NAME }}-linux-x64.7z
+        gh release upload v${{ env.PACKAGE_VERSION }}-$GITHUB_RUN_ID ${{ env.APP_NAME }}-${{ env.PACKAGE_VERSION }}/${{ env.APP_NAME }}-win-x64.zip
+        gh release upload v${{ env.PACKAGE_VERSION }}-$GITHUB_RUN_ID ${{ env.APP_NAME }}-${{ env.PACKAGE_VERSION }}/${{ env.APP_NAME }}-win-x64.7z
