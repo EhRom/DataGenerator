@@ -103,7 +103,7 @@ public class GeneratorService(IConfiguration configuration, IHolidayService holi
     {
         string generatedFileName = BuildFilePath(outputDirectoryPath, fileNamePrefix, period.Start, period.End);
 
-        string headerContent = IDataContainer.GetCsvHeaders(dataService.GetDataHeaders(), csvSeparatorCharacter);
+        string headerContent = IDataContainer.GetCsvHeaders(csvSeparatorCharacter, dataService.GetDataHeaders());
         await File.WriteAllTextAsync(generatedFileName, headerContent);
 
         return generatedFileName;
